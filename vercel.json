@@ -11,6 +11,12 @@
         "src": "/api/update_notion",
         "dest": "api/update_notion.py"
       }
+    ],
+    "crons": [
+        {
+          "path": "/api/update_notion",
+          "schedule": "0 0 * * *"
+        }
     ]
   }
   
