@@ -1,8 +1,29 @@
 import os
 import requests
 from dotenv import load_dotenv
-
+from http.server import BaseHTTPRequestHandler
 load_dotenv()
+ 
+class handler(BaseHTTPRequestHandler):
+    def handler(request):
+        hevy_data = fetch_hevy_data()
+        if hevy_data:
+            if check_last_id(hevy_data):
+                return {
+                    "statusCode": 500,
+                    "body": "Notion not updated with Hevy data due to not having new workouts"
+                }
+            update_notion(hevy_data)
+            return {
+                "statusCode": 200,
+                "body": "Notion updated successfully with Hevy data"
+            }
+        else:
+            return {
+                "statusCode": 500,
+                "body": "Error fetching Hevy data"
+            }
+
 
 NOTION_API_URL = "https://api.notion.com/v1/pages/"
 NOTION_API_URL_BLOCK = "https://api.notion.com/v1/blocks/"
@@ -72,25 +93,6 @@ def update_notion(data):
         if response.status_code != 200:
             print(f"Error updating Notion: {response.text}")
         save_last_workout_id(workout["id"])
-
-def handler(request):
-    hevy_data = fetch_hevy_data()
-    if hevy_data:
-        if check_last_id(hevy_data):
-            return {
-                "statusCode": 500,
-                "body": "Notion not updated with Hevy data due to not having new workouts"
-            }
-        update_notion(hevy_data)
-        return {
-            "statusCode": 200,
-            "body": "Notion updated successfully with Hevy data"
-        }
-    else:
-        return {
-            "statusCode": 500,
-            "body": "Error fetching Hevy data"
-        }
     
 def payload_treino(treino):
     return {
@@ -146,3 +148,4 @@ def format_workout_description(workout_data):
 
 if __name__ == "__main__":
     print(handler({}))
+
