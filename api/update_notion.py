@@ -119,7 +119,6 @@ def payload_treino(treino):
 		]
     }
 
-@app.route('/api/update_notion', methods=['POST'])
 def format_workout_description(workout_data):
     description = []
         
@@ -145,5 +144,9 @@ def format_workout_description(workout_data):
     
     return "\n".join(description)
 
-if __name__ == "__main__":
-    print(handler({}))
+def main(event, context):
+    response = handler(event)
+    return {
+        'statusCode': 200,
+        'body': response
+    }
