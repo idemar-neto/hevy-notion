@@ -118,3 +118,6 @@ def format_workout_description(workout_data):
         description.append("")
     
     return "\n".join(description)
+
+if __name__ == "__main__":
+    print(handler({}))
