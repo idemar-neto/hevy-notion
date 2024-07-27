@@ -23,6 +23,15 @@ hevy_headers = {
     "api-key": HEVY_API_KEY
 }
 
+def read_last_workout_id(file_path='api/last_workout_id.txt'):
+    try:
+        with open(file_path, 'r') as file:
+            last_workout_id = file.read().strip()
+            return last_workout_id
+    except FileNotFoundError:
+        return None
+
+
 def fetch_hevy_data():
     try:
         response = requests.get(HEVY_API_URL, headers=hevy_headers)
@@ -34,6 +43,16 @@ def fetch_hevy_data():
     except Exception as e:
         print(f"Exception fetching Hevy data: {e}")
         return None
+    
+def check_last_id(data):
+    for workout in data['workouts']:
+        if workout['id'] == read_last_workout_id():
+            return True
+
+def save_last_workout_id(workout_id, file_path='api/last_workout_id.txt'):
+    with open(file_path, 'w') as file:
+        file.write(workout_id)
+
 
 def update_notion(data):
     for workout in data['workouts']:
@@ -52,10 +71,16 @@ def update_notion(data):
         response = requests.patch(NOTION_API_URL_BLOCK + DATABASE_ID + "/children", headers=notion_headers, json=payload)
         if response.status_code != 200:
             print(f"Error updating Notion: {response.text}")
+        save_last_workout_id(workout["id"])
 
 def handler(request):
     hevy_data = fetch_hevy_data()
     if hevy_data:
+        if check_last_id(hevy_data):
+            return {
+                "statusCode": 500,
+                "body": "Notion not updated with Hevy data due to not having new workouts"
+            }
         update_notion(hevy_data)
         return {
             "statusCode": 200,
@@ -94,6 +119,7 @@ def payload_treino(treino):
 		]
     }
 
+@app.route('/api/update_notion', methods=['POST'])
 def format_workout_description(workout_data):
     description = []
         
