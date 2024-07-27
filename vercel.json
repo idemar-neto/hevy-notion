@@ -4,9 +4,17 @@
     {
       "src": "api/update_notion.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
+    {
+      "src": "/",
+      "dest": "api/index.py"
+    },
     {
       "src": "/api/update_notion",
       "dest": "api/update_notion.py"
