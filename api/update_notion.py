@@ -5,24 +5,28 @@ from http.server import BaseHTTPRequestHandler
 load_dotenv()
  
 class handler(BaseHTTPRequestHandler):
-    def handler(request):
-        hevy_data = fetch_hevy_data()
-        if hevy_data:
-            if check_last_id(hevy_data):
-                return {
-                    "statusCode": 500,
-                    "body": "Notion not updated with Hevy data due to not having new workouts"
-                }
-            update_notion(hevy_data)
-            return {
-                "statusCode": 200,
-                "body": "Notion updated successfully with Hevy data"
-            }
-        else:
+     def do_GET(self):
+         self.send_response(200)
+         self.send_response(handler())
+
+def handler(request):
+    hevy_data = fetch_hevy_data()
+    if hevy_data:
+        if check_last_id(hevy_data):
             return {
                 "statusCode": 500,
-                "body": "Error fetching Hevy data"
+                "body": "Notion not updated with Hevy data due to not having new workouts"
             }
+        update_notion(hevy_data)
+        return {
+            "statusCode": 200,
+            "body": "Notion updated successfully with Hevy data"
+        }
+    else:
+        return {
+            "statusCode": 500,
+            "body": "Error fetching Hevy data"
+        }
 
 
 NOTION_API_URL = "https://api.notion.com/v1/pages/"
