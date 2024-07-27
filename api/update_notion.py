@@ -144,6 +144,7 @@ def format_workout_description(workout_data):
     
     return "\n".join(description)
 
+@app.route('/api/update_notion', methods=['POST'])
 def main(event, context):
     response = handler(event)
     return {
