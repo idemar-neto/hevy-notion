@@ -1,0 +1,17 @@
+name: Schedule Notion Update
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # Executar a cada hora
+  workflow_dispatch:
+
+jobs:
+  update-notion:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Call Vercel API
+      run: curl -X POST https://<your-vercel-project>.vercel.app/api/update_notion
