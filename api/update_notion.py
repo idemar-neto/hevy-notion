@@ -1,6 +1,9 @@
 import os
 import requests
 from dotenv import load_dotenv
+from flask import Flask, jsonify
+
+app = Flask(__name__)
 
 load_dotenv()
 
@@ -73,7 +76,7 @@ def update_notion(data):
             print(f"Error updating Notion: {response.text}")
         save_last_workout_id(workout["id"])
 
-def handler(request):
+def handler():
     hevy_data = fetch_hevy_data()
     if hevy_data:
         if check_last_id(hevy_data):
@@ -144,10 +147,14 @@ def format_workout_description(workout_data):
     
     return "\n".join(description)
 
-@app.route('/api/update_notion', methods=['POST'])
-def main(event, context):
-    response = handler(event)
-    return {
-        'statusCode': 200,
-        'body': response
-    }
+@app.route('/')
+def home():
+    return "Welcome to the Flask app!"
+
+@app.route('/api/update_notion')
+def cron_handler():
+    response = handler()
+    return jsonify(response)
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
