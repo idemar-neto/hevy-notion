@@ -15,8 +15,7 @@
     "env": {
       "NOTION_TOKEN": "@notion_token",
       "DATABASE_ID": "@database_id",
-      "HEVY_API_KEY": "@hevy_api_key",
-      "OFFLINE": "false"
+      "HEVY_API_KEY": "@hevy_api_key"
     }
   }
   
