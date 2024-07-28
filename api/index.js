@@ -1,7 +1,8 @@
 const express = require('express');
 const axios = require('axios');
-const fs = require('fs');
 const dotenv = require('dotenv');
+const sqlite3 = require('sqlite3');
+const { open } = require('better-sqlite3');
 
 dotenv.config();
 
@@ -26,12 +27,26 @@ const hevyHeaders = {
 
 const app = express();
 
-const readLastWorkoutId = (filePath = 'api/last_workout_id.txt') => {
-    try {
-        return fs.readFileSync(filePath, 'utf8').trim();
-    } catch (err) {
-        return null;
-    }
+// Configuração do banco de dados SQLite
+const db = open({
+    filename: 'workouts.db',
+    driver: sqlite3.Database
+});
+
+// Inicializa a tabela se não existir
+db.exec('CREATE TABLE IF NOT EXISTS last_workout (id TEXT)');
+
+const getLastWorkoutId = () => {
+    const row = db.prepare('SELECT id FROM last_workout ORDER BY rowid DESC LIMIT 1').get();
+    return row ? row.id : null;
+};
+
+const saveLastWorkoutId = (workoutId) => {
+    db.prepare('INSERT INTO last_workout (id) VALUES (?)').run(workoutId);
+};
+
+const clearLastWorkoutId = () => {
+    db.exec('DELETE FROM last_workout');
 };
 
 const fetchHevyData = async () => {
@@ -45,19 +60,16 @@ const fetchHevyData = async () => {
 };
 
 const checkLastId = (data) => {
-    if (!data || !data.workouts) {
+    const lastWorkoutId = getLastWorkoutId();
+    if (!data || !data.workouts || !lastWorkoutId) {
         return false;
     }
     for (const workout of data.workouts) {
-        if (workout.id === readLastWorkoutId()) {
+        if (workout.id === lastWorkoutId) {
             return true;
         }
     }
     return false;
-};
-
-const saveLastWorkoutId = (workoutId, filePath = 'api/last_workout_id.txt') => {
-    fs.writeFileSync(filePath, workoutId);
 };
 
 const updateNotion = async (data) => {
@@ -142,7 +154,7 @@ const formatWorkoutDescription = (workoutData) => {
     return description.join("\n");
 };
 
-app.get('/update_notion', async (req, res) => {
+app.get('/update-notion', async (req, res) => {
     const hevyData = await fetchHevyData();
     if (hevyData) {
         if (checkLastId(hevyData)) {
@@ -162,6 +174,14 @@ app.get('/update_notion', async (req, res) => {
             "body": "Error fetching Hevy data"
         });
     }
+});
+
+app.get('/clear-last-workout-id', (req, res) => {
+    clearLastWorkoutId();
+    res.status(200).json({
+        "statusCode": 200,
+        "body": "Last workout ID cleared successfully"
+    });
 });
 
 const port = process.env.PORT || 3000;
