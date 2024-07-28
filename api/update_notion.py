@@ -6,11 +6,11 @@ load_dotenv()
  
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        handler = handler()
-        self.send_response(handler['statusCode'])
+        response = handler()
+        self.send_response(response['statusCode'])
         self.send_header('Content-type','text/plain')
         self.end_headers()
-        self.wfile.write(handler['body'].encode("utf-8"))
+        self.wfile.write(response['body'].encode("utf-8"))
         return
     
     def handler(request):
