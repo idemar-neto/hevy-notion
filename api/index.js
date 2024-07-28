@@ -134,7 +134,7 @@ const formatWorkoutDescription = (workoutData) => {
     return description.join("\n");
 };
 
-app.get('/update-notion', async (req, res) => {
+app.get('/update_notion', async (req, res) => {
     const hevyData = await fetchHevyData();
     if (hevyData) {
         if (checkLastId(hevyData)) {
