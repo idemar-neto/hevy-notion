@@ -14,4 +14,4 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Call Vercel API
-      run: curl -X POST https://hevy-notion.vercel.app/update_notion
+      run: curl -X GET https://hevy-notion.vercel.app/update_notion
