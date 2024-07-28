@@ -27,13 +27,13 @@ const hevyHeaders = {
 
 const app = express();
 
-const readLastWorkoutId = (filePath = 'api/last_workout_id.txt') => {
-    try {
-        return fs.readFileSync(filePath, 'utf8').trim();
-    } catch (err) {
-        return null;
-    }
-};
+// const readLastWorkoutId = (filePath = 'api/last_workout_id.txt') => {
+//     try {
+//         return fs.readFileSync(filePath, 'utf8').trim();
+//     } catch (err) {
+//         return null;
+//     }
+// };
 
 const fetchHevyData = async () => {
     try {
@@ -45,40 +45,21 @@ const fetchHevyData = async () => {
     }
 };
 
-const checkLastId = (data) => {
-    if (!data || !data.workouts) {
-        return false;
-    }
-    for (const workout of data.workouts) {
-        if (workout.id === readLastWorkoutId()) {
-            return true;
-        }
-    }
-    return false;
-};
+// const checkLastId = (data) => {
+//     if (!data || !data.workouts) {
+//         return false;
+//     }
+//     for (const workout of data.workouts) {
+//         if (workout.id === readLastWorkoutId()) {
+//             return true;
+//         }
+//     }
+//     return false;
+// };
 
 const saveLastWorkoutId = (workoutId, filePath = 'api/last_workout_id.txt') => {
     fs.writeFileSync(filePath, workoutId);
 };
-
-const getLastTreino = async () => {
-    try {
-        query = {
-            "sorts": [
-                {
-                "property": "data",
-                "direction": "descending"
-                }
-            ]
-        }
-        const response = await axios.post(NOTION_API_URL_DATABASE + DATABASE_ID + "/query", query, { headers: notionHeaders });
-        console.log(response);
-        return response.status === 200 ? response.data : null;
-    } catch (error) {
-        console.error(`Error fetching : ${error}`);
-        return null;
-    }
-}
 
 const fetchDatabasePages = async () => {
     const url = `https://api.notion.com/v1/databases/${DATABASE_ID}/query`;
@@ -144,7 +125,7 @@ const updateNotion = async (data) => {
             const blockPayload = payloadTreino(workout);
             response = await axios.patch(`${NOTION_API_URL_BLOCK}${lastPage.id}/children`, blockPayload, { headers: notionHeaders });
 
-            saveLastWorkoutId(workout.id);
+            // saveLastWorkoutId(workout.id);
 
             return true
         } catch (error) {
@@ -212,12 +193,12 @@ const formatWorkoutDescription = (workoutData) => {
 app.get('/update_notion', async (req, res) => {
     const hevyData = await fetchHevyData();
     if (hevyData) {
-        if (checkLastId(hevyData)) {
-            return res.status(500).json({
-                "statusCode": 500,
-                "body": "Notion not updated with Hevy data due to not having new workouts"
-            });
-        }
+        // if (checkLastId(hevyData)) {
+        //     return res.status(500).json({
+        //         "statusCode": 500,
+        //         "body": "Notion not updated with Hevy data due to not having new workouts"
+        //     });
+        // }
         const bool = await updateNotion(hevyData);
         return bool ? res.status(200).json({
             "statusCode": 200,
