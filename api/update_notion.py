@@ -1,7 +1,6 @@
 import os
 import requests
 from dotenv import load_dotenv
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
 load_dotenv()
 
@@ -14,7 +13,7 @@ HEVY_API_KEY = os.getenv("HEVY_API_KEY")
 
 notion_headers = {
     "Authorization": f"Bearer {NOTION_TOKEN}",
-    "Connection": "keep-alive",
+    "Connection" : "keep-alive",
     "Content-Type": "application/json",
     "Notion-Version": "2022-02-22"
 }
@@ -32,6 +31,7 @@ def read_last_workout_id(file_path='api/last_workout_id.txt'):
     except FileNotFoundError:
         return None
 
+
 def fetch_hevy_data():
     try:
         response = requests.get(HEVY_API_URL, headers=hevy_headers)
@@ -43,16 +43,16 @@ def fetch_hevy_data():
     except Exception as e:
         print(f"Exception fetching Hevy data: {e}")
         return None
-
+    
 def check_last_id(data):
     for workout in data['workouts']:
         if workout['id'] == read_last_workout_id():
             return True
-    return False
 
 def save_last_workout_id(workout_id, file_path='api/last_workout_id.txt'):
     with open(file_path, 'w') as file:
         file.write(workout_id)
+
 
 def update_notion(data):
     for workout in data['workouts']:
@@ -73,54 +73,7 @@ def update_notion(data):
             print(f"Error updating Notion: {response.text}")
         save_last_workout_id(workout["id"])
 
-def payload_treino(treino):
-    return {
-        "children": [
-            {
-                "object": "block",
-                "type": "heading_2",
-                "heading_2": {
-                    "rich_text": [{ "type": "text", "text": { "content": treino['title'] } }]
-                }
-            },
-            {
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {
-                    "rich_text": [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": format_workout_description(treino)
-                            }
-                        }
-                    ]
-                }
-            }
-        ]
-    }
-
-def format_workout_description(workout_data):
-    description = []
-
-    for exercise in workout_data['exercises']:
-        description.append(exercise['title'])
-        for i, set_info in enumerate(exercise['sets']):
-            set_line = f"Série {i + 1}: "
-            if 'weight' in set_info:
-                set_line += f"{set_info['weight_kg']} kg x "
-            set_line += f"{set_info['reps']} "
-            if 'rpe' in set_info:
-                set_line += f"@ {set_info['rpe']} rpe"
-            if 'set_type' in set_info:
-                if set_info['set_type'] != "normal":
-                    set_line += f" [{set_info['set_type']}]"
-            description.append(set_line)
-        description.append("")
-
-    return "\n".join(description)
-
-def handler(event, context):
+def handler(request):
     hevy_data = fetch_hevy_data()
     if hevy_data:
         if check_last_id(hevy_data):
@@ -138,11 +91,59 @@ def handler(event, context):
             "statusCode": 500,
             "body": "Error fetching Hevy data"
         }
-
-def main(request):
-    response = handler(None, None)
+    
+def payload_treino(treino):
     return {
-        'statusCode': response['statusCode'],
-        'headers': {'Content-Type': 'text/plain'},
-        'body': response['body']
+        "children": [
+		{
+			"object": "block",
+			"type": "heading_2",
+			"heading_2": {
+				"rich_text": [{ "type": "text", "text": { "content": treino['title'] } }]
+			}
+        },
+        {
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": {
+                "rich_text": [
+                    {
+                        "type": "text",
+                        "text": {
+                            "content": format_workout_description(treino)
+                        }
+                    }
+                ]
+            }
+        }
+		]
     }
+
+def format_workout_description(workout_data):
+    description = []
+        
+    for exercise in workout_data['exercises']:
+        description.append(exercise['title'])
+        for i, set_info in enumerate(exercise['sets']):
+            set_line = f"Série {i + 1}: "
+            
+            if 'weight' in set_info:
+                set_line += f"{set_info['weight_kg']} kg x "
+            
+            set_line += f"{set_info['reps']} "
+            
+            if 'rpe' in set_info:
+                set_line += f"@ {set_info['rpe']} rpe"
+            
+            if 'set_type' in set_info:
+                if set_info['set_type'] != "normal":
+                    set_line += f" [{set_info['set_type']}]"
+            
+            description.append(set_line)
+        description.append("")
+    
+    return "\n".join(description)
+
+if __name__ == "__main__":
+    handler({})
+
