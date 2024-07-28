@@ -8,7 +8,7 @@ class handler(BaseHTTPRequestHandler):
             load_dotenv()
             hevy_headers = {
                 "accept": "application/json",
-                "api-key": HEVY_API_KEY
+                "api-key": "36a430aa-fd22-4153-8789-8aad8ce0306a"
             }
             HEVY_API_URL = "https://api.hevyapp.com/v1/workouts?page=1&pageSize=1"
             response = requests.get(HEVY_API_URL, headers=hevy_headers)
