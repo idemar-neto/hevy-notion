@@ -45,6 +45,9 @@ const fetchHevyData = async () => {
 };
 
 const checkLastId = (data) => {
+    if (!data || !data.workouts) {
+        return false;
+    }
     for (const workout of data.workouts) {
         if (workout.id === readLastWorkoutId()) {
             return true;
@@ -58,6 +61,11 @@ const saveLastWorkoutId = (workoutId, filePath = 'api/last_workout_id.txt') => {
 };
 
 const updateNotion = async (data) => {
+    if (!data || !data.workouts) {
+        console.error('No valid workout data to update Notion');
+        return;
+    }
+
     for (const workout of data.workouts) {
         const payload = {
             "properties": {
@@ -66,14 +74,14 @@ const updateNotion = async (data) => {
         };
 
         try {
-            await axios.patch(`${NOTION_API_URL}${DATABASE_ID}`, payload, { headers: notionHeaders });
+            let response = await axios.patch(`${NOTION_API_URL}${DATABASE_ID}`, payload, { headers: notionHeaders });
 
             const blockPayload = payloadTreino(workout);
-            await axios.patch(`${NOTION_API_URL_BLOCK}${DATABASE_ID}/children`, blockPayload, { headers: notionHeaders });
+            response = await axios.patch(`${NOTION_API_URL_BLOCK}${DATABASE_ID}/children`, blockPayload, { headers: notionHeaders });
 
             saveLastWorkoutId(workout.id);
         } catch (error) {
-            console.error(`Error updating Notion: ${error.response.data}`);
+            console.error(`Error updating Notion: ${error.response ? error.response.data : error.message}`);
         }
     }
 };
@@ -112,7 +120,7 @@ const formatWorkoutDescription = (workoutData) => {
         for (const [i, setInfo] of exercise.sets.entries()) {
             let setLine = `Série ${i + 1}: `;
 
-            if (setInfo.weight) {
+            if (setInfo.weight_kg) {
                 setLine += `${setInfo.weight_kg} kg x `;
             }
 
