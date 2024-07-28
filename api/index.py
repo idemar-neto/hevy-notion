@@ -18,7 +18,7 @@ class handler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
-                self.wfile.write(json.dumps(response.json()))
+                self.wfile.write(json.dumps(response.json()).encode("utf-8"))
             else:
                 print(f"Error fetching Hevy data: {response.status_code}")
                 return None
