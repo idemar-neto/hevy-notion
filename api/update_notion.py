@@ -120,7 +120,7 @@ def format_workout_description(workout_data):
 
     return "\n".join(description)
 
-def handler(request):
+def handler(event, context):
     hevy_data = fetch_hevy_data()
     if hevy_data:
         if check_last_id(hevy_data):
@@ -139,19 +139,10 @@ def handler(request):
             "body": "Error fetching Hevy data"
         }
 
-class MyHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        response = handler({})
-        self.send_response(response['statusCode'])
-        self.send_header('Content-type', 'text/plain')
-        self.end_headers()
-        self.wfile.write(response['body'].encode("utf-8"))
-
-def run(server_class=HTTPServer, handler_class=MyHandler, port=8000):
-    server_address = ('', port)
-    httpd = server_class(server_address, handler_class)
-    print(f'Starting server on port {port}...')
-    httpd.serve_forever()
-
-if __name__ == "__main__":
-    run()
+def main(request):
+    response = handler(None, None)
+    return {
+        'statusCode': response['statusCode'],
+        'headers': {'Content-Type': 'text/plain'},
+        'body': response['body']
+    }
