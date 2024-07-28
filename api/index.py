@@ -1,6 +1,8 @@
 from http.server import BaseHTTPRequestHandler
 import requests
 from dotenv import load_dotenv
+import json
+
 class handler(BaseHTTPRequestHandler):
  
     def do_GET(self):
@@ -16,7 +18,7 @@ class handler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
-                self.wfile.write(response.json())
+                self.wfile.write(json.dumps(response.json()))
             else:
                 print(f"Error fetching Hevy data: {response.status_code}")
                 return None
