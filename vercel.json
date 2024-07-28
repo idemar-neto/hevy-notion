@@ -2,15 +2,21 @@
     "version": 2,
     "builds": [
       {
-        "src": "api/update_notion.py",
-        "use": "@vercel/python"
+        "src": "index.js",
+        "use": "@vercel/node"
       }
     ],
     "routes": [
       {
         "src": "/(.*)",
-        "dest": "api/update_notion.py"
+        "dest": "/index.js"
       }
-    ]
+    ],
+    "env": {
+      "NOTION_TOKEN": "@notion_token",
+      "DATABASE_ID": "@database_id",
+      "HEVY_API_KEY": "@hevy_api_key",
+      "OFFLINE": "false"
+    }
   }
   
