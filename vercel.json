@@ -15,7 +15,7 @@
     "crons": [
         {
             "path": "/update_notion",
-            "schedule": "0 13 * * *"
+            "schedule": "25 13 * * *"
         }
     ]
 }
