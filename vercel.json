@@ -15,5 +15,11 @@
             "src": "/update_notion",
             "dest": "api/index.js"
         }
+    ],
+    "crons": [
+        {
+            "path": "/update_notion",
+            "schedule": "0 58 1,12,23 ? * * *"
+        }
     ]
 }
