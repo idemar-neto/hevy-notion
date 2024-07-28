@@ -27,14 +27,6 @@ const hevyHeaders = {
 
 const app = express();
 
-// const readLastWorkoutId = (filePath = 'api/last_workout_id.txt') => {
-//     try {
-//         return fs.readFileSync(filePath, 'utf8').trim();
-//     } catch (err) {
-//         return null;
-//     }
-// };
-
 const fetchHevyData = async () => {
     try {
         const response = await axios.get(HEVY_API_URL, { headers: hevyHeaders });
@@ -43,22 +35,6 @@ const fetchHevyData = async () => {
         console.error(`Error fetching Hevy data: ${error}`);
         return null;
     }
-};
-
-// const checkLastId = (data) => {
-//     if (!data || !data.workouts) {
-//         return false;
-//     }
-//     for (const workout of data.workouts) {
-//         if (workout.id === readLastWorkoutId()) {
-//             return true;
-//         }
-//     }
-//     return false;
-// };
-
-const saveLastWorkoutId = (workoutId, filePath = 'api/last_workout_id.txt') => {
-    fs.writeFileSync(filePath, workoutId);
 };
 
 const fetchDatabasePages = async () => {
@@ -213,18 +189,6 @@ app.get('/update_notion', async (req, res) => {
             "body": "Error fetching Hevy data"
         });
     }
-});
-
-const clearLastWorkoutId = (filePath = 'api/last_workout_id.txt') => {
-    fs.writeFileSync(filePath, '');
-};
-
-app.get('/clear-last-workout-id', (req, res) => {
-    clearLastWorkoutId();
-    res.status(200).json({
-        "statusCode": 200,
-        "body": "Last workout ID cleared successfully"
-    });
 });
 
 const port = process.env.PORT || 3000;
