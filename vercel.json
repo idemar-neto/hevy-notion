@@ -12,9 +12,10 @@
             "dest": "api/index.js"
         }
     ],
-    "functions": {
-        "api/update-notion.js": {
+    "crons": [
+        {
+            "path": "/(.*)",
             "schedule": "0 58 0,12,23 ? * * *"
         }
-    }
+    ]
 }
