@@ -1,9 +1,11 @@
 from http.server import BaseHTTPRequestHandler
 import requests
+from dotenv import load_dotenv
 class handler(BaseHTTPRequestHandler):
  
     def do_GET(self):
         try:
+            load_dotenv()
             hevy_headers = {
                 "accept": "application/json",
                 "api-key": HEVY_API_KEY
