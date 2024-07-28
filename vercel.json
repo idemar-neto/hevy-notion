@@ -14,7 +14,7 @@
     ],
     "crons": [
         {
-            "path": "/api/index",
+            "path": "/update_notion",
             "schedule": "58 23 * * *"
         }
     ]
