@@ -118,12 +118,17 @@ const updateNotion = async (data) => {
 
     if (!lastPage) {
         console.error('No pages found in the database');
-        return;
+        return false;
     }
 
     if(new Date(lastPage.created_time).toDateString() !== new Date().toDateString()) {
         console.error('No pages found in this date');
-        return;
+        return false;
+    }
+
+    if(lastPage.properties.Treino.rich_text.length > 0){
+        console.error('This day already has a workout saved');
+        return false;
     }
 
     for (const workout of data.workouts) {
@@ -140,6 +145,8 @@ const updateNotion = async (data) => {
             response = await axios.patch(`${NOTION_API_URL_BLOCK}${lastPage.id}/children`, blockPayload, { headers: notionHeaders });
 
             saveLastWorkoutId(workout.id);
+
+            return true
         } catch (error) {
             console.error(`Error updating Notion: ${error.response ? error.response.data : error.message}`);
         }
@@ -211,10 +218,13 @@ app.get('/update_notion', async (req, res) => {
                 "body": "Notion not updated with Hevy data due to not having new workouts"
             });
         }
-        await updateNotion(hevyData);
-        return res.status(200).json({
+        const bool = await updateNotion(hevyData);
+        return bool ? res.status(200).json({
             "statusCode": 200,
             "body": "Notion updated successfully with Hevy data"
+        }) : res.status(500).json({
+            "statusCode": 500,
+            "body": "Error"
         });
     } else {
         return res.status(500).json({
