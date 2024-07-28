@@ -6,7 +6,7 @@ load_dotenv()
  
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        response = handler()
+        response = handler({})
         self.send_response(response['statusCode'])
         self.send_header('Content-type','text/plain')
         self.end_headers()
