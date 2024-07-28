@@ -1,6 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
+from flask import Flask, jsonify
 
 load_dotenv()
 
@@ -13,7 +14,7 @@ HEVY_API_KEY = os.getenv("HEVY_API_KEY")
 
 notion_headers = {
     "Authorization": f"Bearer {NOTION_TOKEN}",
-    "Connection" : "keep-alive",
+    "Connection": "keep-alive",
     "Content-Type": "application/json",
     "Notion-Version": "2022-02-22"
 }
@@ -23,6 +24,8 @@ hevy_headers = {
     "api-key": HEVY_API_KEY
 }
 
+app = Flask(__name__)
+
 def read_last_workout_id(file_path='api/last_workout_id.txt'):
     try:
         with open(file_path, 'r') as file:
@@ -30,7 +33,6 @@ def read_last_workout_id(file_path='api/last_workout_id.txt'):
             return last_workout_id
     except FileNotFoundError:
         return None
-
 
 def fetch_hevy_data():
     try:
@@ -43,7 +45,7 @@ def fetch_hevy_data():
     except Exception as e:
         print(f"Exception fetching Hevy data: {e}")
         return None
-    
+
 def check_last_id(data):
     for workout in data['workouts']:
         if workout['id'] == read_last_workout_id():
@@ -53,12 +55,11 @@ def save_last_workout_id(workout_id, file_path='api/last_workout_id.txt'):
     with open(file_path, 'w') as file:
         file.write(workout_id)
 
-
 def update_notion(data):
     for workout in data['workouts']:
         payload = {
             "properties": {
-                "Treino": { "rich_text": [{ "text": { "content": workout['title'] } }] }
+                "Treino": {"rich_text": [{"text": {"content": workout['title']}}]}
             }
         }
 
@@ -73,77 +74,77 @@ def update_notion(data):
             print(f"Error updating Notion: {response.text}")
         save_last_workout_id(workout["id"])
 
-def handler(request):
+@app.route('/update-notion', methods=['GET'])
+def handler():
     hevy_data = fetch_hevy_data()
     if hevy_data:
         if check_last_id(hevy_data):
-            return {
+            return jsonify({
                 "statusCode": 500,
                 "body": "Notion not updated with Hevy data due to not having new workouts"
-            }
+            })
         update_notion(hevy_data)
-        return {
+        return jsonify({
             "statusCode": 200,
             "body": "Notion updated successfully with Hevy data"
-        }
+        })
     else:
-        return {
+        return jsonify({
             "statusCode": 500,
             "body": "Error fetching Hevy data"
-        }
-    
+        })
+
 def payload_treino(treino):
     return {
         "children": [
-		{
-			"object": "block",
-			"type": "heading_2",
-			"heading_2": {
-				"rich_text": [{ "type": "text", "text": { "content": treino['title'] } }]
-			}
-        },
-        {
-            "object": "block",
-            "type": "paragraph",
-            "paragraph": {
-                "rich_text": [
-                    {
-                        "type": "text",
-                        "text": {
-                            "content": format_workout_description(treino)
+            {
+                "object": "block",
+                "type": "heading_2",
+                "heading_2": {
+                    "rich_text": [{"type": "text", "text": {"content": treino['title']}}]
+                }
+            },
+            {
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": format_workout_description(treino)
+                            }
                         }
-                    }
-                ]
+                    ]
+                }
             }
-        }
-		]
+        ]
     }
 
 def format_workout_description(workout_data):
     description = []
-        
+
     for exercise in workout_data['exercises']:
         description.append(exercise['title'])
         for i, set_info in enumerate(exercise['sets']):
             set_line = f"Série {i + 1}: "
-            
+
             if 'weight' in set_info:
                 set_line += f"{set_info['weight_kg']} kg x "
-            
+
             set_line += f"{set_info['reps']} "
-            
+
             if 'rpe' in set_info:
                 set_line += f"@ {set_info['rpe']} rpe"
-            
+
             if 'set_type' in set_info:
                 if set_info['set_type'] != "normal":
                     set_line += f" [{set_info['set_type']}]"
-            
+
             description.append(set_line)
         description.append("")
-    
+
     return "\n".join(description)
 
 if __name__ == "__main__":
-    handler({})
-
+    app.run(debug=True)

@@ -2,14 +2,12 @@ from http.server import BaseHTTPRequestHandler
 import requests
 from dotenv import load_dotenv
 import json
-import update_notion as u
 
 class handler(BaseHTTPRequestHandler):
  
     def do_GET(self):
         try:
             load_dotenv()
-            u.handler({})
             hevy_headers = {
                 "accept": "application/json",
                 "api-key": "36a430aa-fd22-4153-8789-8aad8ce0306a"
