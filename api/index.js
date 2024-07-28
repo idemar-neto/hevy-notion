@@ -1,13 +1,13 @@
 const express = require('express');
 const axios = require('axios');
+const fs = require('fs');
 const dotenv = require('dotenv');
-const sqlite3 = require('sqlite3');
-const { open } = require('better-sqlite3');
 
 dotenv.config();
 
 const NOTION_API_URL = "https://api.notion.com/v1/pages/";
 const NOTION_API_URL_BLOCK = "https://api.notion.com/v1/blocks/";
+const NOTION_API_URL_DATABASE = "https://api.notion.com/v1/database/";
 const NOTION_TOKEN = process.env.NOTION_TOKEN;
 const DATABASE_ID = process.env.DATABASE_ID;
 const HEVY_API_URL = "https://api.hevyapp.com/v1/workouts?page=1&pageSize=1";
@@ -27,26 +27,12 @@ const hevyHeaders = {
 
 const app = express();
 
-// Configuração do banco de dados SQLite
-const db = open({
-    filename: 'workouts.db',
-    driver: sqlite3.Database
-});
-
-// Inicializa a tabela se não existir
-db.exec('CREATE TABLE IF NOT EXISTS last_workout (id TEXT)');
-
-const getLastWorkoutId = () => {
-    const row = db.prepare('SELECT id FROM last_workout ORDER BY rowid DESC LIMIT 1').get();
-    return row ? row.id : null;
-};
-
-const saveLastWorkoutId = (workoutId) => {
-    db.prepare('INSERT INTO last_workout (id) VALUES (?)').run(workoutId);
-};
-
-const clearLastWorkoutId = () => {
-    db.exec('DELETE FROM last_workout');
+const readLastWorkoutId = (filePath = 'api/last_workout_id.txt') => {
+    try {
+        return fs.readFileSync(filePath, 'utf8').trim();
+    } catch (err) {
+        return null;
+    }
 };
 
 const fetchHevyData = async () => {
@@ -60,21 +46,83 @@ const fetchHevyData = async () => {
 };
 
 const checkLastId = (data) => {
-    const lastWorkoutId = getLastWorkoutId();
-    if (!data || !data.workouts || !lastWorkoutId) {
+    if (!data || !data.workouts) {
         return false;
     }
     for (const workout of data.workouts) {
-        if (workout.id === lastWorkoutId) {
+        if (workout.id === readLastWorkoutId()) {
             return true;
         }
     }
     return false;
 };
 
+const saveLastWorkoutId = (workoutId, filePath = 'api/last_workout_id.txt') => {
+    fs.writeFileSync(filePath, workoutId);
+};
+
+const getLastTreino = async () => {
+    try {
+        query = {
+            "sorts": [
+                {
+                "property": "data",
+                "direction": "descending"
+                }
+            ]
+        }
+        const response = await axios.post(NOTION_API_URL_DATABASE + DATABASE_ID + "/query", query, { headers: notionHeaders });
+        console.log(response);
+        return response.status === 200 ? response.data : null;
+    } catch (error) {
+        console.error(`Error fetching : ${error}`);
+        return null;
+    }
+}
+
+const fetchDatabasePages = async () => {
+    const url = `https://api.notion.com/v1/databases/${DATABASE_ID}/query`;
+    try {
+        const response = await axios.post(url, {}, { headers: notionHeaders });
+        if (response.status === 200) {
+            return response.data.results;
+        } else {
+            console.error(`Error fetching database pages: ${response.status}`);
+            return [];
+        }
+    } catch (error) {
+        console.error(`Exception fetching database pages: ${error}`);
+        return [];
+    }
+};
+
+const getLastPage = (pages) => {
+    if (pages.length === 0) {
+        return null;
+    }
+    return pages.reduce((latest, page) => {
+        const latestCreatedTime = new Date(latest.created_time).getTime();
+        const currentCreatedTime = new Date(page.created_time).getTime();
+        return currentCreatedTime > latestCreatedTime ? page : latest;
+    });
+};
+
 const updateNotion = async (data) => {
     if (!data || !data.workouts) {
         console.error('No valid workout data to update Notion');
+        return;
+    }
+    
+    const pages = await fetchDatabasePages();
+    const lastPage = getLastPage(pages);
+
+    if (!lastPage) {
+        console.error('No pages found in the database');
+        return;
+    }
+
+    if(new Date(lastPage.created_time).toDateString() !== new Date().toDateString()) {
+        console.error('No pages found in this date');
         return;
     }
 
@@ -86,10 +134,10 @@ const updateNotion = async (data) => {
         };
 
         try {
-            let response = await axios.patch(`${NOTION_API_URL}${DATABASE_ID}`, payload, { headers: notionHeaders });
+            let response = await axios.patch(`${NOTION_API_URL}${lastPage.id}`, payload, { headers: notionHeaders });
 
             const blockPayload = payloadTreino(workout);
-            response = await axios.patch(`${NOTION_API_URL_BLOCK}${DATABASE_ID}/children`, blockPayload, { headers: notionHeaders });
+            response = await axios.patch(`${NOTION_API_URL_BLOCK}${lastPage.id}/children`, blockPayload, { headers: notionHeaders });
 
             saveLastWorkoutId(workout.id);
         } catch (error) {
@@ -154,7 +202,7 @@ const formatWorkoutDescription = (workoutData) => {
     return description.join("\n");
 };
 
-app.get('/update-notion', async (req, res) => {
+app.get('/update_notion', async (req, res) => {
     const hevyData = await fetchHevyData();
     if (hevyData) {
         if (checkLastId(hevyData)) {
@@ -175,6 +223,10 @@ app.get('/update-notion', async (req, res) => {
         });
     }
 });
+
+const clearLastWorkoutId = (filePath = 'api/last_workout_id.txt') => {
+    fs.writeFileSync(filePath, '');
+};
 
 app.get('/clear-last-workout-id', (req, res) => {
     clearLastWorkoutId();

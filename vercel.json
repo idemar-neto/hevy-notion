@@ -1,16 +1,20 @@
 {
     "version": 2,
     "builds": [
-      {
-        "src": "api/index.js",
-        "use": "@vercel/node"
-      }
+        {
+            "src": "api/index.js",
+            "use": "@vercel/node"
+        }
     ],
     "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "api/index.js"
-      }
-    ]
-  }
-  
+        {
+            "src": "/(.*)",
+            "dest": "api/index.js"
+        }
+    ],
+    "functions": {
+        "api/update-notion.js": {
+            "schedule": "0 58 0,12,23 ? * * *"
+        }
+    }
+}
