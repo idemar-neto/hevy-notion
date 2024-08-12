@@ -148,7 +148,14 @@ const formatWorkoutDescription = (workoutData) => {
                 setLine += `${setInfo.weight_kg} kg x `;
             }
 
-            setLine += `${setInfo.reps} `;
+            if (setInfo.reps){
+                setLine += `${setInfo.reps} `;
+            }
+            
+            if (setInfo.weight_kg == null && setInfo.reps == null && setInfo.duration_seconds) {
+                setLine += `${Math.floor(setInfo.duration_seconds / 60)} : ${Math.floor(setInfo.duration_seconds % 60)} `;
+            }
+
 
             if (setInfo.rpe) {
                 setLine += `@ ${setInfo.rpe} rpe`;
