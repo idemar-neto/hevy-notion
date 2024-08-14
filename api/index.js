@@ -153,7 +153,7 @@ const formatWorkoutDescription = (workoutData) => {
             }
             
             if (setInfo.weight_kg == null && setInfo.reps == null && setInfo.duration_seconds) {
-                setLine += `${Math.floor(setInfo.duration_seconds / 60)} : ${Math.floor(setInfo.duration_seconds % 60)} `;
+                setLine += `${Math.floor(setInfo.duration_seconds / 60)}:${String(Math.floor(setInfo.duration_seconds % 60)).padStart(2, '0')} `;
             }
 
 
